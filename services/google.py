@@ -51,6 +51,15 @@ class Provider(BaseModel):
         if not value:
             raise ValueError('не указаны почты поставщиков!')
         return value
+    
+
+class GlobalSettings(BaseModel):
+    search_range: int
+
+    @validator('search_range', pre=True)
+    def convert_to_int(cls, value):
+        return int(value)
+
 
 class Config:
     def __init__(self, outer_self):
@@ -69,6 +78,19 @@ class Config:
             (param_name, config_headers_full_row.index(param_human_name)) 
             for param_name, param_human_name in GOOGLE.CONFIG_HEADERS.items()
         )
+
+        self.global_settings = GlobalSettings(**dict(list(
+            (list(
+                setting_key for setting_key in GOOGLE.GLOBAL_SETTINGS 
+                if GOOGLE.GLOBAL_SETTINGS[setting_key] == setting_item[0]
+            )[0],
+            setting_item[1]) 
+            for setting_item in list((
+                    row[self.param_column_number['global_settings']], 
+                    row[self.param_column_number['global_settings_values']]
+                ) for row in all_config_values[1:])
+            if setting_item[0]
+        )))
 
         providers = filter(lambda provider_row: bool(provider_row[self.param_column_number['provider']]), all_config_values[1:])
 

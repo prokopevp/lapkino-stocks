@@ -19,7 +19,13 @@ class GOOGLE:
         'worksheet_num': 'Номер листа', 
         'is_validations': 'Валидации', 
         'actions_with_balance_values': 'Действия с остатками', 
-        'actions_with_articles_values': 'Действия с артикулами'
+        'actions_with_articles_values': 'Действия с артикулами',
+        'global_settings': 'Общие настройки',
+        'global_settings_values': 'Значения глобальных настроек',
+    }
+
+    GLOBAL_SETTINGS = {
+        'search_range': 'За сколько дней проверять'
     }
 
 class MAIL_RU:

@@ -29,8 +29,6 @@ class Mail():
  
         ids_string = data[0]
         ids = ids_string.split()[::-1][:10]
-
-        print(ids)
         
         for id in ids:
             result, data = self.mail.uid('fetch', id, "(RFC822)")
