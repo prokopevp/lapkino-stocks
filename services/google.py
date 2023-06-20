@@ -112,6 +112,15 @@ class Config:
                 self.config_sheet = self.outer_self.spreadsheet.worksheet(GOOGLE.CONFIG_WORKSHEET_TITLE)
         self.config_sheet.clear()
         self.config_sheet.update(f'A1:{num_to_char(len(GOOGLE.CONFIG_HEADERS))}1', [list(GOOGLE.CONFIG_HEADERS.values())])
+
+        settings_keys = list(GOOGLE.GLOBAL_SETTINGS)
+        global_settings_char_index_in_sheet = num_to_char(list(GOOGLE.CONFIG_HEADERS).index('global_settings') + 1)
+        
+        if settings_keys:
+            self.config_sheet.update(
+                f"{global_settings_char_index_in_sheet}2:{global_settings_char_index_in_sheet}{len(settings_keys)+1}", 
+                [[GOOGLE.GLOBAL_SETTINGS[key]] for key in settings_keys]
+            )
         
 
 

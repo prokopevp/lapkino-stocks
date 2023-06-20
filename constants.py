@@ -11,12 +11,12 @@ class GOOGLE:
         'provider': 'Поставщик', 
         'found': 'Найден', 
         'exclude': 'Исключить', 
-        'article_col_num': 'Номер столбца с артикулом', 
-        'balance_col_num': 'Номер столбца с остатком', 
-        'name_col_num': 'Номер столбца с наименованием', 
+        'article_col_num': 'Артикул (номер столбца)', 
+        'balance_col_num': 'Остаток (номер столбца)', 
+        'name_col_num': 'Наименование (номер столбца)', 
         'provider_emails': 'Почты через запятую', 
         'ignore_before': 'Игнорировать до', 
-        'worksheet_num': 'Номер листа', 
+        'worksheet_num': 'Лист', 
         'is_validations': 'Валидации', 
         'actions_with_balance_values': 'Действия с остатками', 
         'actions_with_articles_values': 'Действия с артикулами',
@@ -25,7 +25,7 @@ class GOOGLE:
     }
 
     GLOBAL_SETTINGS = {
-        'search_range': 'За сколько дней проверять'
+        'search_range': 'За сколько дней проверять',
     }
 
 class MAIL_RU:

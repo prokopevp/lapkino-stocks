@@ -19,7 +19,7 @@ class Mail():
         self.mail = mail
 
     def print_last_stocks(self):
-        stocks_folder_name = f"/{get_decoded_string(MAIL_RU.FOLDER)}" if MAIL_RU.FOLDER else ""
+        stocks_folder_name = get_decoded_string(MAIL_RU.FOLDER)
 
         self.mail.select(f'INBOX/{stocks_folder_name}')
 
@@ -46,8 +46,6 @@ class Mail():
             if not os.path.exists(path):
                 os.makedirs(path)
 
-            print(f"from: {email.utils.parseaddr(email_message['From'])[1]}")
-
             if email_message.is_multipart():
                 for payload in email_message.walk():
                     if payload.get_content_disposition() == 'attachment':
@@ -59,7 +57,6 @@ class Mail():
                                 file_name = file_name.decode()
                             except UnicodeDecodeError:
                                 file_name = file_name.decode('latin-1')
-                        print("'--> " + file_name)
 
                         print('!!!!!!', file_name)
                         if any(ext in file_name for ext in ['.xls', '.xlsx']):
