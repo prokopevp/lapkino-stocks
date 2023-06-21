@@ -1,4 +1,5 @@
 import os
+import openpyxl
 import xlrd
 
 class Excel:
@@ -13,70 +14,49 @@ class Excel:
     }
 
 
-    def __init__(self, book_path=''):
+    def __init__(self, book_path: str = '', worksheet_number: int = 0):
         if book_path and os.path.exists(book_path):
+            # if book_path.endswith('.xls'):
+            self.file_format = 'xls'
+
             try:
                 self.book = xlrd.open_workbook(book_path, formatting_info=True)
             except NotImplementedError:
                 self.book = xlrd.open_workbook(book_path)
 
+            self.worksheet = self.book.sheet_by_index(worksheet_number)
+            # elif book_path.endswith('.xlsx'):
+            #     self.file_format = 'xlsx'
 
-    def clean_row(self, row: list) -> list:
-        return list(
-            map(
-                lambda cell: cell.value 
-                if cell.ctype not in [
-                        self.CTYPES['empty'], 
-                        self.CTYPES['error']
-                    ] 
-                    else '', 
-                row
-            )
-        )
-    
-    def get_all_rows(self, only_values=False, sheet_index=0) -> list:
-        sh = self.book.sheet_by_index(sheet_index)
+            #     self.book = openpyxl.load_workbook(book_path)
 
-        return list(
-            map(
-                lambda rx: self.clean_row(sh.row(rx)) if only_values else sh.row(rx), 
-                range(sh.nrows)
-            )
-        )
+            #     self.worksheet = self.book.worksheets[worksheet_number]
+            
+
+
+    def clean_cell(self, cell):
+        if self.file_format == 'xls':
+            return cell.value if cell.ctype not in [self.CTYPES['empty'], self.CTYPES['error']] else ''
+        elif self.file_format == 'xlsx':
+            return cell
     
-    def format_cell(self, value, type: str = None, zero_on_blank_int: bool = False):
+    def format_cell(self, value, type = str, zero_on_blank_int: bool = False):
         if not type: return value
 
-        def format_or_blank(value, type):
-            try:
-                return type(value)
-            except:
-                return '' if not zero_on_blank_int else 0
-
-
-        match type:
-            case 'int':
-                return format_or_blank(value, int)
-            case 'str':
-                return format_or_blank(value, str)
-            case other:
-                return value
-
-    
-    def get_clean_col(self, 
-            index: int, 
-            sheet_index: int = 0, 
-            format_type: str = None,
-            zero_on_blank_int: bool = False,
-        ) -> list:
-        rows = self.get_all_rows(only_values=True, sheet_index=sheet_index)
-
-        return list(
-            map(
-                lambda row: self.format_cell(row[index], format_type, zero_on_blank_int),
-                rows,
-            )
-        )
+        try:
+            return type(value)
+        except:
+            return '' if not zero_on_blank_int else 0
+            
+    def get_clean_col(self, column_index: int, format_to = str, zero_on_blank_int: bool = False) -> list:
+        if self.file_format == 'xls':
+            return list(
+                map(
+                    lambda cell: 
+                        self.format_cell(self.clean_cell(cell), format_to, zero_on_blank_int),
+                    self.worksheet.col(column_index)
+                )
+            )[:100]
     
     def get_article_balance_description_cols(
         self,
@@ -85,10 +65,12 @@ class Excel:
         description_col_index: int = None,
         articles_cels_format_type: str = None,
     ) -> list[list]:
+        print(article_col_index, balance_col_index, description_col_index)
+
         return [
-            self.get_clean_col(article_col_index, format_type=articles_cels_format_type),
-            self.get_clean_col(balance_col_index, format_type='int', zero_on_blank_int=True),
-            self.get_clean_col(description_col_index),
+            self.get_clean_col(article_col_index - 1, format_to=articles_cels_format_type),
+            self.get_clean_col(balance_col_index - 1, format_to=int, zero_on_blank_int=True),
+            self.get_clean_col(description_col_index - 1),
         ]
     
 
