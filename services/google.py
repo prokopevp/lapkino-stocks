@@ -49,6 +49,8 @@ class Config:
             providers
         ))
 
+        print(self.providers[2].ignore_before)
+
     def init_remote_from_local(self, row_len: int = 26):
         try:
             self.config_sheet = self.outer_self.add_worksheet(title=GOOGLE.CONFIG_WORKSHEET_TITLE)
@@ -86,7 +88,7 @@ class StocksGoogleSheet():
         try:
             self.worksheet = self.spreadsheet.worksheet(title)
         except gspread.exceptions.WorksheetNotFound:
-            new_worksheet = self.add_worksheet(title=title, rows=rows_num, cols=cols_num)
+            new_worksheet = self.add_worksheet(title=title, rows_num=rows_num, cols_num=cols_num)
             self.worksheet = new_worksheet
 
     def get_cell_value(self, row: int, col: int):

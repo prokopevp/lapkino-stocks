@@ -11,6 +11,7 @@ from services.decode import get_decoded_string
 
 from services.excel import Excel
 from services.utils import char_to_num, equal_to_mail_provider
+from dateutil import parser
 
 
 class Mail():
@@ -34,7 +35,12 @@ class Mail():
         return ids_string.split()[::-1]
 
 
-    def fetch_message_and_print_if_provider(self, uid, providers_list: list[Provider]):
+    def fetch_message_and_check_validity_for_providers(self, 
+            uid, 
+            providers_list: list[Provider], 
+            init_datetime: datetime.datetime
+        ) -> Provider | None:
+
         result, data = self.mail.uid('fetch', uid, "(RFC822)")
         encoded_raw_email = data[0][1]
         
@@ -46,16 +52,23 @@ class Mail():
 
         email_message = email.message_from_string(raw_email)
         message_from = email.utils.parseaddr(email_message['From'])[1]
+        message_date = email.utils.parsedate_to_datetime(email_message['date']).replace(tzinfo=None)
 
-        path = './stocks_files/' 
-        if not os.path.exists(path):
-            os.makedirs(path)
+        print(f"from: {message_from}, date: {message_date}")
 
         provider = equal_to_mail_provider(message_from, providers_list)
+
+        if provider and provider.ignore_before and provider.ignore_before > message_date:
+            provider.status = "ИГНОРИРОВАН"
+            return provider
 
         if provider and email_message.is_multipart():
             for payload in email_message.walk():
                 if payload.get_content_disposition() == 'attachment':
+                    path = './stocks_files/' 
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+
                     file_name = decode_header(payload.get_filename())[0][0]
                     if isinstance(file_name, bytes):
                         try:
@@ -71,12 +84,15 @@ class Mail():
                             new_file.write(payload.get_payload(decode=True))
 
                         e = Excel(path+file_name)
-                        print(e.get_article_balance_description_cols(
+                        stocks_data = e.get_article_balance_description_cols(
                             article_col_index=provider.article_col_num, 
                             balance_col_index=provider.balance_col_num,
                             description_col_index=provider.name_col_num,
                             articles_cels_format_type=str,
-                        ))
+                        )
+
+                        for key in stocks_data:
+                            setattr(provider, key, stocks_data[key])
                         return provider
 
         return None

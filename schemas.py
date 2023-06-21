@@ -1,12 +1,13 @@
 import datetime
 from pydantic import BaseModel, validator
+from dateutil import parser
 
 from services.utils import char_to_num
 
 
 class Provider(BaseModel):
     provider: str 
-    found: bool
+    status: str | None
     exclude: bool 
     article_col_num: int 
     balance_col_num: int
@@ -18,11 +19,20 @@ class Provider(BaseModel):
     actions_with_balance_values: list
     actions_with_articles_values: list
 
-    @validator('ignore_before', pre=True)
-    def none_if_not_provided(cls, value):
-        return None if not value else value
+    articles: list = []
+    stocks: list = []
+    names: list = []
 
-    @validator('found', 'exclude', 'is_validations', pre=True)
+    @validator('ignore_before', 'status', pre=True)
+    def none_if_not_provided(cls, value):
+        
+        return None if not value else value
+    
+    @validator('ignore_before', pre=True)
+    def convert_to_date(cls, value):
+        return None if not value else parser.parse(value)   
+
+    @validator('exclude', 'is_validations', pre=True)
     def convert_FALSE_and_TRUE_to_bool(cls, value):
         match value:
             case 'FALSE' | '':
@@ -37,7 +47,7 @@ class Provider(BaseModel):
         try:
             return int(value)
         except:
-            return char_to_num(value)
+            return char_to_num(value.upper())
 
     @validator('emails', 'actions_with_balance_values', 'actions_with_articles_values', pre=True)
     def convert_str_to_list(cls, value: str):

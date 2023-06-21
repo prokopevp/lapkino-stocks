@@ -9,7 +9,7 @@ class GOOGLE:
     CONFIG_WORKSHEET_TITLE = 'Настройка'
     CONFIG_HEADERS = {
         'provider': 'Поставщик', 
-        'found': 'Найден', 
+        'status': 'Статус', 
         'exclude': 'Исключить', 
         'article_col_num': 'Артикул (номер столбца)', 
         'balance_col_num': 'Остаток (номер столбца)', 
