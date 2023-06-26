@@ -1,31 +1,33 @@
 import datetime
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, validator
 from dateutil import parser
+from constants import GOOGLE
 
 from services.utils import char_to_num
 
 
 class Provider(BaseModel):
-    provider: str 
+    provider: str = Field(..., alias=GOOGLE.CONFIG_HEADERS['provider'])
     status: str | None
-    exclude: bool 
-    article_col_num: int 
-    balance_col_num: int
-    name_col_num: int | None = None
-    emails: list[str]
-    ignore_before: datetime.datetime | None = None
-    worksheet_num: int
-    is_validations: bool
-    actions_with_balance_values: list
-    actions_with_articles_values: list
+    exclude: bool = Field(..., alias=GOOGLE.CONFIG_HEADERS['exclude'])
+    article_col_num: int = Field(..., alias=GOOGLE.CONFIG_HEADERS['article_col_num'])
+    balance_col_num: int = Field(..., alias=GOOGLE.CONFIG_HEADERS['balance_col_num'])
+    article_col_num_in_google: int = Field(..., alias=GOOGLE.CONFIG_HEADERS['article_col_num_in_google'])
+    balance_col_num_in_google: int = Field(..., alias=GOOGLE.CONFIG_HEADERS['balance_col_num_in_google'])
+    emails: list[str] = Field(..., alias=GOOGLE.CONFIG_HEADERS['emails'])
+    ignore_before: datetime.datetime | None = Field(None, alias=GOOGLE.CONFIG_HEADERS['ignore_before'])
+    worksheet_num: int = Field(..., alias=GOOGLE.CONFIG_HEADERS['worksheet_num'])
+    is_validations: bool = Field(..., alias=GOOGLE.CONFIG_HEADERS['is_validations'])
+    actions_with_balance_values: str = ''
+    actions_with_articles_values: str = ''
 
     articles: list = []
     stocks: list = []
-    names: list = []
 
-    @validator('ignore_before', 'status', pre=True)
+    previous_articles: list = []
+
+    @validator('status', pre=True)
     def none_if_not_provided(cls, value):
-        
         return None if not value else value
     
     @validator('ignore_before', pre=True)
@@ -42,14 +44,21 @@ class Provider(BaseModel):
             case _:
                 return value
 
-    @validator('article_col_num', 'balance_col_num', 'name_col_num', 'worksheet_num', pre=True)
+    @validator(
+        'article_col_num', 
+        'balance_col_num', 
+        'article_col_num_in_google', 
+        'balance_col_num_in_google', 
+        'worksheet_num', 
+        pre=True
+    )
     def convert_to_int(cls, value):
         try:
             return int(value)
         except:
             return char_to_num(value.upper())
 
-    @validator('emails', 'actions_with_balance_values', 'actions_with_articles_values', pre=True)
+    @validator('emails', pre=True)
     def convert_str_to_list(cls, value: str):
         if not value:
             return []
@@ -62,10 +71,16 @@ class Provider(BaseModel):
             raise ValueError('не указаны почты поставщиков!')
         return value
     
+    class Config:
+        allow_population_by_field_name = True
+    
 
 class GlobalSettings(BaseModel):
-    search_range: int
+    search_range: int = Field(..., alias=GOOGLE.GLOBAL_SETTINGS['search_range'])
 
     @validator('search_range', pre=True)
     def convert_to_int(cls, value):
         return int(value)
+    
+    class Config:
+        allow_population_by_field_name = True

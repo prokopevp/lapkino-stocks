@@ -3,7 +3,7 @@ import gspread
 
 from constants import GOOGLE
 from schemas import GlobalSettings, Provider
-from services.utils import num_to_char
+from services.utils import char_to_num, num_to_char
 
 
 class Config:
@@ -17,27 +17,31 @@ class Config:
 
         not_found_headers = set(GOOGLE.CONFIG_HEADERS.values()) - set(config_headers_full_row)
         if not_found_headers:
-            raise ValueError(list(not_found_headers))
+            raise ValueError(f'не найдены настройки: {",".join(list(not_found_headers))}')
         
         self.param_column_number = dict(
             (param_name, config_headers_full_row.index(param_human_name)) 
             for param_name, param_human_name in GOOGLE.CONFIG_HEADERS.items()
         )
 
-        self.global_settings = GlobalSettings(**dict(list(
-            (list(
-                setting_key for setting_key in GOOGLE.GLOBAL_SETTINGS 
-                if GOOGLE.GLOBAL_SETTINGS[setting_key] == setting_item[0]
-            )[0],
-            setting_item[1]) 
-            for setting_item in list((
-                    row[self.param_column_number['global_settings']], 
-                    row[self.param_column_number['global_settings_values']]
-                ) for row in all_config_values[1:])
-            if setting_item[0]
-        )))
+        first_config_column = self.config_sheet.col_values(1)
+        second_config_column = self.config_sheet.col_values(2)
+        
+        index_of_global_settings_header = first_config_column.index(GOOGLE.GLOBAL_SETTINGS_HEADERS['global_settings'])
 
-        providers = filter(lambda provider_row: bool(provider_row[self.param_column_number['provider']]), all_config_values[1:])
+        settings_keys = list(
+            list(GOOGLE.GLOBAL_SETTINGS.keys())[
+                list(GOOGLE.GLOBAL_SETTINGS.values()).index(setting_human_key)
+            ] 
+            for setting_human_key 
+            in first_config_column[index_of_global_settings_header + 1:]
+        )
+
+        settings_values = second_config_column[index_of_global_settings_header + 1]
+
+        self.global_settings = GlobalSettings(**dict(zip(settings_keys, settings_values)))
+
+        providers = filter(lambda provider_row: bool(provider_row[self.param_column_number['provider']]), all_config_values[1:index_of_global_settings_header])
 
         self.providers = list(map(
             lambda provider: 
@@ -49,7 +53,16 @@ class Config:
             providers
         ))
 
-        print(self.providers[2].ignore_before)
+    def update_remote_from_local(self, providers: list[Provider]):
+        status_column_char = num_to_char(self.param_column_number['status'] + 1)
+        ignore_before_column_char = num_to_char(self.param_column_number['ignore_before'] + 1)
+
+        for provider in providers:
+            provider_row = self.config_sheet.find(provider.provider).row
+            
+            self.config_sheet.update(f"{status_column_char}{provider_row}", provider.status)
+            self.config_sheet.update(f"{ignore_before_column_char}{provider_row}", str(provider.ignore_before or ''))
+
 
     def init_remote_from_local(self, row_len: int = 26):
         try:
@@ -60,14 +73,12 @@ class Config:
         self.config_sheet.clear()
         self.config_sheet.update(f'A1:{num_to_char(len(GOOGLE.CONFIG_HEADERS))}1', [list(GOOGLE.CONFIG_HEADERS.values())])
 
-        settings_keys = list(GOOGLE.GLOBAL_SETTINGS)
-        global_settings_char_index_in_sheet = num_to_char(list(GOOGLE.CONFIG_HEADERS).index('global_settings') + 1)
         
-        if settings_keys:
-            self.config_sheet.update(
-                f"{global_settings_char_index_in_sheet}2:{global_settings_char_index_in_sheet}{len(settings_keys)+1}", 
-                [[GOOGLE.GLOBAL_SETTINGS[key]] for key in settings_keys]
-            )
+        self.config_sheet.update(f"A4:B4", [[*GOOGLE.GLOBAL_SETTINGS_HEADERS.values()]])
+        if GOOGLE.GLOBAL_SETTINGS:
+            global_settings = list(zip(GOOGLE.GLOBAL_SETTINGS.values()))
+            print(global_settings)
+            self.config_sheet.update(f"A5:A{4+len(GOOGLE.GLOBAL_SETTINGS)}", global_settings)
         
 
 
@@ -78,6 +89,36 @@ class StocksGoogleSheet():
         self.worker = gspread.service_account(filename=full_path)
         self.spreadsheet = self.worker.open_by_key(GOOGLE.SHEET_KEY)
         self.worksheets_list = self.spreadsheet.worksheets()
+
+    
+    def update_buh_stocks(self):
+        buh_sheet = self.worker.open_by_key(GOOGLE.BUH_GOOGLE_SHEET_API_KEY)
+
+        buh_worksheet = buh_sheet.worksheet('бух')
+        
+
+        buh_articles = buh_worksheet.col_values(char_to_num("D"))
+        buh_names = buh_worksheet.col_values(char_to_num("E"))
+        buh_stocks = buh_worksheet.col_values(char_to_num("F"))
+
+        num_of_rows = max(
+            map(
+                lambda col: len(col), 
+                [buh_stocks, buh_names, buh_articles]
+            )
+        )
+
+        try:
+            our_buh_worksheet = self.spreadsheet.worksheet('Бух')
+        except gspread.exceptions.WorksheetNotFound:
+            our_buh_worksheet = self.add_worksheet(title="Бух", rows_num=1000, cols_num=24)
+
+        our_buh_worksheet.update( 
+            f"B1:D{num_of_rows}",
+            list(zip(buh_articles, buh_names, buh_stocks)),
+            raw = True,
+        )
+        
 
     def add_worksheet(self, title: str, rows_num: int = 1000, cols_num: int = 26):
         new_worksheet = self.spreadsheet.add_worksheet(title=title, rows=rows_num, cols=cols_num)
@@ -96,3 +137,11 @@ class StocksGoogleSheet():
 
     def get_all_values(self) -> list:
         return self.worksheet.get_all_values()
+    
+    def get_col_values(self, worksheet_title: str, col_num: int) -> list:
+        try:
+            provider_worksheet = self.spreadsheet.worksheet(worksheet_title)
+            from_provider_google_worksheet_column_values = provider_worksheet.col_values(col_num)
+            return from_provider_google_worksheet_column_values
+        except gspread.exceptions.WorksheetNotFound:
+            return []

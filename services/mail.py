@@ -5,12 +5,12 @@ from email.header import decode_header
 import imaplib
 import os
 from imapclient import imap_utf7
-from constants import MAIL_RU
+from constants import ALLOWBLE_VALIDATION_POWDER, MAIL_RU, STOCKS_FILES_LIBRARY
 from schemas import Provider
 from services.decode import get_decoded_string
 
 from services.excel import Excel
-from services.utils import char_to_num, equal_to_mail_provider
+from services.utils import char_to_num, equal_to_mail_provider, set_value_in_action
 from dateutil import parser
 
 
@@ -54,18 +54,16 @@ class Mail():
         message_from = email.utils.parseaddr(email_message['From'])[1]
         message_date = email.utils.parsedate_to_datetime(email_message['date']).replace(tzinfo=None)
 
-        print(f"from: {message_from}, date: {message_date}")
-
-        provider = equal_to_mail_provider(message_from, providers_list)
+        provider: Provider | None = equal_to_mail_provider(message_from, providers_list)
 
         if provider and provider.ignore_before and provider.ignore_before > message_date:
-            provider.status = "ИГНОРИРОВАН"
+            provider.status = "В ПРЕДЕЛАХ ДАТЫ НЕ НАЙДЕН"
             return provider
 
         if provider and email_message.is_multipart():
             for payload in email_message.walk():
                 if payload.get_content_disposition() == 'attachment':
-                    path = './stocks_files/' 
+                    path = STOCKS_FILES_LIBRARY
                     if not os.path.exists(path):
                         os.makedirs(path)
 
@@ -77,22 +75,44 @@ class Mail():
                             file_name = file_name.decode('latin-1')
 
                     if any(ext in file_name for ext in ['.xls', '.xlsx']):
-                        print(f"from: {email.utils.parseaddr(email_message['From'])[1]}")
-                        print('Downloaded filename: ', file_name)
+                        print(f"*найден:* {provider.provider} \n*отправитель*: {message_from} \n*дата письма*: {message_date}")
 
                         with open(path+file_name, 'wb') as new_file:
                             new_file.write(payload.get_payload(decode=True))
 
                         e = Excel(path+file_name)
-                        stocks_data = e.get_article_balance_description_cols(
+                        stocks_data = e.get_article_and_balance_cols(
                             article_col_index=provider.article_col_num, 
                             balance_col_index=provider.balance_col_num,
-                            description_col_index=provider.name_col_num,
                             articles_cels_format_type=str,
                         )
 
+                        if provider.is_validations:
+                            new_articles: set = set(stocks_data['articles'])
+                            previous_articles: set = set(provider.previous_articles)
+
+                            len_to_calculate_match_powder = len(previous_articles) | 1
+                            current_match_powder = len(new_articles & previous_articles) / len_to_calculate_match_powder
+
+                            if current_match_powder < ALLOWBLE_VALIDATION_POWDER:
+                                provider.status = "НЕ ПРОШЕЛ ВАЛИДАЦИЮ"
+                                
+                                return provider
+
                         for key in stocks_data:
                             setattr(provider, key, stocks_data[key])
+
+                        provider.articles = list(map(
+                            lambda article: set_value_in_action(provider.actions_with_articles_values, article), 
+                            provider.articles
+                        ))
+
+                        provider.stocks = list(map(
+                            lambda stock: set_value_in_action(provider.actions_with_balance_values, stock), 
+                            provider.stocks
+                        ))
+
+                        provider.status = "НАЙДЕН"
                         return provider
 
         return None

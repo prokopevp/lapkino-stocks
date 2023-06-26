@@ -249,7 +249,8 @@ venv.bak/
 venv
 stocks_files/
 
-lapkino-stocks-66fb3e9cd9c8.json
+data.db
+lapkino-stocks-7c6b709c42b1.json
 
 # Spyder project settings
 .spyderproject

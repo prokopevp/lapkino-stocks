@@ -52,17 +52,15 @@ class Excel:
             )
         )
     
-    def get_article_balance_description_cols(
+    def get_article_and_balance_cols(
         self,
         article_col_index: int,
         balance_col_index: int,
-        description_col_index: int = None,
         articles_cels_format_type: str = None,
     ) -> dict[str, list]:
         return {
             "articles": self.get_clean_col(article_col_index - 1, format_to=articles_cels_format_type),
             "stocks": self.get_clean_col(balance_col_index - 1, format_to=int, zero_on_blank_int=True),
-            "names": self.get_clean_col(description_col_index - 1),
         }
     
 
