@@ -20,7 +20,8 @@ class Provider(BaseModel):
     is_validations: bool = Field(..., alias=GOOGLE.CONFIG_HEADERS['is_validations'])
     actions_with_balance_values: str = ''
     actions_with_articles_values: str = ''
-
+    current_date: datetime.datetime | None = Field(None, alias=GOOGLE.CONFIG_HEADERS['current_date'])
+    previous_date: datetime.datetime | None = Field(None, alias=GOOGLE.CONFIG_HEADERS['previous_date'])
     articles: list = []
     stocks: list = []
 
@@ -30,7 +31,7 @@ class Provider(BaseModel):
     def none_if_not_provided(cls, value):
         return None if not value else value
     
-    @validator('ignore_before', pre=True)
+    @validator('ignore_before', 'current_date', 'previous_date', pre=True)
     def convert_to_date(cls, value):
         return None if not value else parser.parse(value)   
 

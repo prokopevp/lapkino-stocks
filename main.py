@@ -53,7 +53,7 @@ class User(StatesGroup):
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     if not check_user(message.from_id):
-        await message.answer("ПАРОЛЬ!")
+        await message.answer("Пароль!")
         await User.password.set()
     else:
         await message.answer("*Что вы хотите?*", reply_markup=main_menu_markup, parse_mode='markdown')
@@ -62,7 +62,7 @@ async def process_start_command(message: types.Message):
 @dp.callback_query_handler(text=['to_main_menu'])
 async def user_state_entrypoint(callback: types.CallbackQuery):
     if not check_user(callback.message.chat.id):
-        await callback.answer("ПАРОЛЬ!")
+        await bot.send_message(callback.message.chat.id, "Пароль!")
         await User.password.set()
     else:
         await bot.send_message(callback.message.chat.id, "*Что вы хотите?*", reply_markup=main_menu_markup, parse_mode='markdown')
@@ -78,13 +78,19 @@ async def user_state_password(message: types.Message, state: FSMContext):
             create_user(message.from_id)
             await message.answer("Привет! Что вы хотите?", reply_markup=main_menu_markup)
         else:
-            await message.answer("ПАРОЛЬ!")
+            await message.answer("Пароль!")
             await User.password.set()
     
     
 @dp.callback_query_handler(text=['update_stocks'])
 async def user_state_entrypoint(callback: types.CallbackQuery):
     from_id = callback.message.chat.id
+
+    if not check_user(from_id):
+        await bot.send_message(from_id, "Пароль!")
+        await User.password.set()
+
+        return
 
     await bot.send_message(from_id, "*Начинаю обновлять остатки...*\n_Когда обновление закончится, вам придет сообщение с результатом._\n\nНе стоит здесь пока ничего нажимать!", parse_mode='markdown')
     
@@ -181,7 +187,15 @@ async def user_state_entrypoint(callback: types.CallbackQuery):
 
     # updating stocks data only for found providers
     for provider in filter(lambda provider: provider.status == 'НАЙДЕН', all_providers):
-        google_sheet.set_worksheet(provider.provider)
+        new_worksheet_name = provider.provider + f" {provider.current_date.strftime('%d.%m')}"
+
+        if provider.previous_date:
+            old_worksheet_name = provider.provider + f" {provider.previous_date.strftime('%d.%m')}" 
+            google_sheet.set_worksheet(old_worksheet_name)
+            google_sheet.worksheet.update_title(new_worksheet_name)
+        else:
+            google_sheet.set_worksheet(provider.provider)
+            google_sheet.worksheet.update_title(new_worksheet_name)
 
         article_col_char = num_to_char(provider.article_col_num_in_google)
         google_sheet.worksheet.update(
@@ -206,7 +220,7 @@ async def user_state_entrypoint(callback: types.CallbackQuery):
     result_message += f"\n\n*Найденные поставщики*: {', '.join(found_providers)}" if found_providers else ""
     result_message += f"\n*Не удалось найти:* {', '.join(list(map(lambda p: p.provider, init_providers)))}" if init_providers else ""
     result_message += f"\n*Проигнорированы*: {', '.join(list(map(lambda p: p.provider, excluded_providers)))}" if excluded_providers else ""
-    result_message += f'\n*В пределах даты "Игнорировать до" не нашлось:* {", ".join(ignored_by_date_providers)}' if ignored_by_date_providers else ""
+    result_message += f'\n*Новых по сравнению с прошлой проверкой не нашлось:* {", ".join(ignored_by_date_providers)}' if ignored_by_date_providers else ""
     result_message += f'\n*Не прошли валидацию:* {", ".join(validation_error_providers)}' if validation_error_providers else ""
     
     result_message += f'\n\n*Нет артикулов в Google Таблице для проверки*: {", ".join(wrong_validation_data_providers_str)}' if wrong_validation_data_providers else ''
@@ -222,6 +236,12 @@ async def user_state_entrypoint(callback: types.CallbackQuery):
 async def user_state_entrypoint(callback: types.CallbackQuery):
     from_id = callback.message.chat.id
 
+    if not check_user(from_id):
+        await bot.send_message(from_id, "Пароль!")
+        await User.password.set()
+
+        return
+
     await bot.send_message(
         from_id, 
         "Если в Google таблице уже есть лист настройки, то он будет полностью стерт перед созданием нового.\n\n***Вы уверены?***", 
@@ -233,6 +253,12 @@ async def user_state_entrypoint(callback: types.CallbackQuery):
 @dp.callback_query_handler(text=['init_remote_from_local'])
 async def user_state_entrypoint(callback: types.CallbackQuery):
     from_id = callback.message.chat.id
+
+    if not check_user(from_id):
+        await bot.send_message(from_id, "Пароль!")
+        await User.password.set()
+
+        return
 
     await bot.send_message(from_id, "*Создаю новый лист настройки...*\n_Когда создание закончится, вам придет сюда сообщение с результатом._", parse_mode='markdown')
     

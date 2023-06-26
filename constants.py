@@ -8,7 +8,7 @@ class GOOGLE:
     SHEET_KEY = os.environ.get('GOOGLE_SHEET_KEY')
     CONFIG_WORKSHEET_TITLE = 'Настройка'
     BUH_GOOGLE_SHEET_API_KEY = os.environ.get("BUH_GOOGLE_SHEET_API_KEY")
-    
+
     CONFIG_HEADERS = {
         'provider': 'Поставщик', 
         'status': 'Статус', 
@@ -19,7 +19,9 @@ class GOOGLE:
         'balance_col_num_in_google': 'Остаток google (номер столбца)', 
         'worksheet_num': 'Лист', 
         'emails': 'Почты через запятую', 
-        'ignore_before': 'Игнорировать до', 
+        'current_date': 'Дата актуальных остатков',
+        'ignore_before': 'Дата проверки', 
+        'previous_date': 'Дата прошлых остатков',
         'is_validations': 'Валидации', 
         'actions_with_balance_values': 'Действия с остатками', 
         'actions_with_articles_values': 'Действия с артикулами',

@@ -56,12 +56,16 @@ class Config:
     def update_remote_from_local(self, providers: list[Provider]):
         status_column_char = num_to_char(self.param_column_number['status'] + 1)
         ignore_before_column_char = num_to_char(self.param_column_number['ignore_before'] + 1)
+        previous_date_column_char = num_to_char(self.param_column_number['previous_date'] + 1)
+        current_date_column_char = num_to_char(self.param_column_number['current_date'] + 1)
 
         for provider in providers:
             provider_row = self.config_sheet.find(provider.provider).row
             
             self.config_sheet.update(f"{status_column_char}{provider_row}", provider.status)
             self.config_sheet.update(f"{ignore_before_column_char}{provider_row}", str(provider.ignore_before or ''))
+            self.config_sheet.update(f"{previous_date_column_char}{provider_row}", str(provider.previous_date or ''))
+            self.config_sheet.update(f"{current_date_column_char}{provider_row}", str(provider.current_date or ''))
 
 
     def init_remote_from_local(self, row_len: int = 26):

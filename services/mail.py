@@ -113,6 +113,8 @@ class Mail():
                         ))
 
                         provider.status = "НАЙДЕН"
+                        provider.previous_date = provider.current_date
+                        provider.current_date = message_date
                         return provider
 
         return None
