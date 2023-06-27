@@ -117,6 +117,8 @@ class StocksGoogleSheet():
         except gspread.exceptions.WorksheetNotFound:
             our_buh_worksheet = self.add_worksheet(title="Бух", rows_num=1000, cols_num=24)
 
+        our_buh_worksheet.batch_clear(['B:B', 'C:C', 'D:D'])
+
         our_buh_worksheet.update( 
             f"B1:D{num_of_rows}",
             list(zip(buh_articles, buh_names, buh_stocks)),

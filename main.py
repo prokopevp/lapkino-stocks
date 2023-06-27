@@ -140,7 +140,8 @@ async def user_state_entrypoint(callback: types.CallbackQuery):
         else:
             if provider.is_validations:
                  # getting previous articles for provider 
-                previous_articles = google_sheet.get_col_values(provider.provider, provider.article_col_num_in_google)
+                current_worksheet_name = provider.provider + f" {provider.current_date.strftime('%d.%m')}"
+                previous_articles = google_sheet.get_col_values(current_worksheet_name, provider.article_col_num_in_google)
 
                 if previous_articles:
                     provider.previous_articles = previous_articles
@@ -198,13 +199,16 @@ async def user_state_entrypoint(callback: types.CallbackQuery):
             google_sheet.worksheet.update_title(new_worksheet_name)
 
         article_col_char = num_to_char(provider.article_col_num_in_google)
+        stocks_col_char = num_to_char(provider.balance_col_num_in_google)
+
+        google_sheet.worksheet.batch_clear([f"{article_col_char}:{article_col_char}", f"{stocks_col_char}:{stocks_col_char}"])
+
         google_sheet.worksheet.update(
             f"{article_col_char}1:{article_col_char}{len(provider.articles)}", 
             list(zip(provider.articles)), 
             raw=not provider.actions_with_articles_values
         )
 
-        stocks_col_char = num_to_char(provider.balance_col_num_in_google)
         google_sheet.worksheet.update(
             f"{stocks_col_char}1:{stocks_col_char}{len(provider.stocks)}", 
             list(zip(provider.stocks)), 
