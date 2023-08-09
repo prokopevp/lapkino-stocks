@@ -1,28 +1,24 @@
-from asyncio import wait_for
+from aiogram import executor
+import datetime
+import logging
+import shutil
+
+from aiogram import Bot, Dispatcher
 from aiogram import executor
 from aiogram import types
-from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from constants import GOOGLE, TELEGRAM_BOT
-from contextlib import redirect_stdout
-import datetime
-import io
-import shutil
+
+from constants import GOOGLE
 from constants import STOCKS_FILES_LIBRARY
+from constants import TELEGRAM_BOT
+from db import check_user, create_user, start_db
 from schemas import Provider
 from services.google import StocksGoogleSheet
 from services.mail import Mail
-
-from db import check_user, create_user, start_db
-import logging
-
-from aiogram import Bot, Dispatcher
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-
-from constants import TELEGRAM_BOT
 from services.utils import num_to_char
-
 
 google_sheet = StocksGoogleSheet()
 mail = Mail()
