@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, exists
 from sqlalchemy.orm import declarative_base, Mapped, mapped_column, Session
 
-engine = create_engine(f'sqlite:///data.db', echo=True)
+engine = create_engine(f'sqlite:////root/lapkino-stocks/data.db', echo=True)
 
 Base = declarative_base()
 

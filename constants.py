@@ -44,7 +44,7 @@ class MAIL_RU:
 ALLOWBLE_VALIDATION_POWDER = 0.1
 ACTION_PARSE_VALUE = "ЯЧЕЙКА"
 
-STOCKS_FILES_LIBRARY = './stocks_files/' 
+STOCKS_FILES_LIBRARY = '/root/lapkino-stocks/stocks_files/' 
 
 class TELEGRAM_BOT:
     API_TOKEN = os.environ.get("TELEGRAM_BOT_API_TOKEN")

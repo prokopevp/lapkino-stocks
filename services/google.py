@@ -88,7 +88,7 @@ class Config:
 
 class StocksGoogleSheet():
     def __init__(self):
-        full_path = os.path.join(os.path.dirname(os.path.realpath('__file__')), GOOGLE.API_JSON_FILENAME)
+        full_path = os.path.join('/root/lapkino-stocks/', GOOGLE.API_JSON_FILENAME)
         self.config = Config(self)
         self.worker = gspread.service_account(filename=full_path)
         self.spreadsheet = self.worker.open_by_key(GOOGLE.SHEET_KEY)

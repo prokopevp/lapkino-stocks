@@ -59,7 +59,7 @@ async def process_start_command(message: types.Message):
         await message.answer("*Что вы хотите?*", reply_markup=main_menu_markup, parse_mode='markdown')
 
 
-@dp.callback_query_handler(text=['to_main_menu'])
+@dp.callback_query_handler(lambda call: call.data == 'to_main_menu')
 async def user_state_entrypoint(callback: types.CallbackQuery):
     if not check_user(callback.message.chat.id):
         await bot.send_message(callback.message.chat.id, "Пароль!")
@@ -82,7 +82,7 @@ async def user_state_password(message: types.Message, state: FSMContext):
             await User.password.set()
     
     
-@dp.callback_query_handler(text=['update_stocks'])
+@dp.callback_query_handler(lambda call: call.data == 'update_stocks')
 async def user_state_entrypoint(callback: types.CallbackQuery):
     from_id = callback.message.chat.id
 
@@ -140,7 +140,7 @@ async def user_state_entrypoint(callback: types.CallbackQuery):
         else:
             if provider.is_validations:
                  # getting previous articles for provider 
-                current_worksheet_name = provider.provider + f" {provider.current_date.strftime('%d.%m')}"
+                current_worksheet_name = provider.provider + f" {provider.current_date.strftime('%d.%m')}" if provider.current_date else provider.provider
                 previous_articles = google_sheet.get_col_values(current_worksheet_name, provider.article_col_num_in_google)
 
                 if previous_articles:
@@ -236,7 +236,7 @@ async def user_state_entrypoint(callback: types.CallbackQuery):
     await bot.send_message(from_id, result_message, parse_mode='markdown', reply_markup=main_menu_markup)
 
 
-@dp.callback_query_handler(text=['init_remote_from_local_answer'])
+@dp.callback_query_handler(lambda call: call.data == 'init_remote_from_local_answer')
 async def user_state_entrypoint(callback: types.CallbackQuery):
     from_id = callback.message.chat.id
 
@@ -254,7 +254,7 @@ async def user_state_entrypoint(callback: types.CallbackQuery):
     )
 
 
-@dp.callback_query_handler(text=['init_remote_from_local'])
+@dp.callback_query_handler(lambda call: call.data == 'init_remote_from_local')
 async def user_state_entrypoint(callback: types.CallbackQuery):
     from_id = callback.message.chat.id
 

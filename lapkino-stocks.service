@@ -1,0 +1,13 @@
+[Unit]
+Description=lapkino-stocks
+After=multi-user.target
+
+[Service]
+User=root
+Group=root
+Type=simple
+Restart=always
+ExecStart=/root/lapkino-stocks/venv/bin/python3 /root/lapkino-stocks/main.py
+
+[Install]
+WantedBy=multi-user.target

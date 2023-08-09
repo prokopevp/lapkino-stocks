@@ -16,6 +16,9 @@ from dateutil import parser
 
 class Mail():
     def __init__(self):
+        self.login()
+
+    def login(self):
         mail = imaplib.IMAP4_SSL('imap.mail.ru')
         mail.login(MAIL_RU.BOX, MAIL_RU.API_KEY)
 
@@ -24,12 +27,22 @@ class Mail():
     def get_mail_uids_since(self, days: int):
         stocks_folder_name = get_decoded_string(MAIL_RU.FOLDER)
 
-        self.mail.select(f'INBOX/{stocks_folder_name}')
+        try:
+            self.mail.select(f'INBOX/{stocks_folder_name}')
+        except Exception as e:
+            print(e)
+            self.login()
+            self.mail.select(f'INBOX/{stocks_folder_name}')
 
         date = (datetime.date.today() - datetime.timedelta(days)).strftime("%d-%b-%Y")
 
-        result, data = self.mail.uid('search', None, f'(SENTSINCE {date})')
- 
+        try:
+            result, data = self.mail.uid('search', None, f'(SENTSINCE {date})')
+        except Exception as e:
+            print(e)
+            self.login()
+            result, data = self.mail.uid('search', None, f'(SENTSINCE {date})')
+
         ids_string = data[0]
         
         return ids_string.split()[::-1]
@@ -41,7 +54,13 @@ class Mail():
             init_datetime: datetime.datetime
         ) -> Provider | None:
 
-        result, data = self.mail.uid('fetch', uid, "(RFC822)")
+        try:
+            result, data = self.mail.uid('fetch', uid, "(RFC822)")
+        except Exception as e:
+            print(e)
+            self.login()
+            result, data = self.mail.uid('fetch', uid, "(RFC822)")
+
         encoded_raw_email = data[0][1]
         
         try:
