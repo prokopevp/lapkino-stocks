@@ -95,11 +95,11 @@ class Mail():
 
                     if any(ext in file_name for ext in ['.xls', '.xlsx']):
                         print(f"*найден:* {provider.provider} \n*отправитель*: {message_from} \n*дата письма*: {message_date}")
-
-                        with open(path+file_name, 'wb') as new_file:
+                        full_path_to_file = os.path.join(path+file_name)
+                        with open(full_path_to_file, 'wb') as new_file:
                             new_file.write(payload.get_payload(decode=True))
 
-                        e = Excel(path+file_name)
+                        e = Excel(full_path_to_file)
                         stocks_data = e.get_article_and_balance_cols(
                             article_col_index=provider.article_col_num, 
                             balance_col_index=provider.balance_col_num,

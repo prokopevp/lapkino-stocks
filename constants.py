@@ -44,7 +44,7 @@ class MAIL_RU:
 ALLOWBLE_VALIDATION_POWDER = 0.1
 ACTION_PARSE_VALUE = "ЯЧЕЙКА"
 
-STOCKS_FILES_LIBRARY = os.path.join(os.path.dirname(__file__), 'stocks_files')
+STOCKS_FILES_LIBRARY = os.path.join(os.path.dirname(__file__), 'stocks_files/')
 
 DISCORD_BOT_API = os.environ.get("DISCORD_BOT_API")
 
